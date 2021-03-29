@@ -354,6 +354,7 @@ describe('lib/plugins/aws/package/compile/events/httpApi.test.js', () => {
   describe('Authorizers: REQUEST (Custom Lambda Authorizer)', () => {
     let cfResources;
     let naming;
+
     before(async () => {
       const { awsNaming, cfTemplate } = await runServerless({
         fixture: 'httpApi',
@@ -748,6 +749,34 @@ describe('lib/plugins/aws/package/compile/events/httpApi.test.js', () => {
 
       expect(routeResourceProps.AuthorizationType).to.equal('JWT');
       expect(routeResourceProps.AuthorizationScopes).to.deep.equal(['foo']);
+    });
+  });
+
+  describe('Authorizers: AWS_IAM', () => {
+    it('should setup correct properties on an endpoint', async () => {
+      const { awsNaming, cfTemplate } = await runServerless({
+        fixture: 'httpApi',
+        configExt: {
+          functions: {
+            foo: {
+              events: [
+                {
+                  httpApi: {
+                    authorizer: {
+                      type: 'aws_iam',
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+        cliArgs: ['package'],
+      });
+      const routeResourceProps =
+        cfTemplate.Resources[awsNaming.getHttpApiRouteLogicalId('GET /foo')].Properties;
+
+      expect(routeResourceProps.AuthorizationType).to.equal('AWS_IAM');
     });
   });
 
